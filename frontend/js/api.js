@@ -22,7 +22,7 @@ async function apiRequest(endpoint, method = "GET", body = null) {
     }
 
     try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, options);
+        const response = await fetch(`${BASE_URL}/${endpoint}`, options);
         const result = await response.json();
         
         if (!response.ok) {
@@ -34,4 +34,5 @@ async function apiRequest(endpoint, method = "GET", body = null) {
         console.error("❌ API Call Error:", error.message);
         throw error;
     }
+
 }
