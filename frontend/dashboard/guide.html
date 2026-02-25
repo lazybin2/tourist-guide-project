@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Dashboard | TravelBD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Poppins', sans-serif; }
+        .sidebar { height: 100vh; background: #198754; color: white; position: fixed; width: 250px; z-index: 1000; }
+        .main-content { margin-left: 250px; padding: 30px; }
+        .booking-card { border: none; border-radius: 15px; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .booking-card:hover { transform: translateY(-5px); }
+        .status-badge { padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: bold; }
+        .btn-action { border-radius: 10px; font-weight: 600; }
+        .nav-link { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar d-flex flex-column p-3">
+    <h3 class="fw-bold mb-4"><i class="fas fa-compass me-2"></i>GuidePanel</h3>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item mb-2">
+            <a id="navRequests" class="nav-link text-white active bg-success" onclick="showRequests()">
+                <i class="fas fa-list me-2"></i> New Requests
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a id="navProfile" class="nav-link text-white" onclick="showProfile()">
+                <i class="fas fa-user-circle me-2"></i> My Profile
+            </a>
+        </li>
+    </ul>
+    <hr>
+    <button class="btn btn-danger w-100 rounded-pill" onclick="logout()">Logout</button>
+</div>
+
+<div class="main-content">
+    <div id="requestsSection">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Manage Bookings</h2>
+            <span class="text-muted" id="guideNameDisplay">Welcome, Guide</span>
+        </div>
+        <div id="bookingList" class="row g-4">
+            <div class="text-center mt-5">
+                <div class="spinner-border text-success" role="status"></div>
+                <p>Fetching your requests...</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="profileSection" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Settings</h2>
+            <span id="verifyBadge" class="status-badge px-4 py-2">Checking Status...</span>
+        </div>
+        
+        <div class="card booking-card p-4" style="max-width: 800px;">
+            <h4 class="fw-bold text-success mb-4"><i class="fas fa-id-card me-2"></i>Edit My Profile</h4>
+            <form id="profileForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Full Name (Primary)</label>
+                        <input type="text" id="editName" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Email Address</label>
+                        <input type="email" id="editEmail" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Phone Number</label>
+                        <input type="text" id="editPhone" class="form-control" placeholder="017XXXXXXXX">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Location</label>
+                        <input type="text" id="editLocation" class="form-control" placeholder="e.g. Sajek, Bandarbans">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Price Per Day (৳)</label>
+                        <input type="number" id="editPrice" class="form-control" placeholder="e.g. 1500">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Languages</label>
+                        <input type="text" id="editLanguages" class="form-control" placeholder="Bangla, English">
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Bio / Expertise</label>
+                        <textarea id="editBio" class="form-control" rows="3" placeholder="Tell travelers about your experience..."></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success w-100 btn-lg rounded-pill shadow-sm mt-3">Update Profile</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+
+    // ১. পেজ লোড হওয়ার সময় লজিক [cite: 2026-02-18]
+    window.onload = async () => {
+        if (!token) window.location.href = "../login.html";
+        
+        const userName = localStorage.getItem('userName');
+        if(userName) document.getElementById('guideNameDisplay').innerText = `Welcome, ${userName}`;
+        
+        loadGuideBookings();
+        loadGuideProfile(); // প্রোফাইল ডাটা ব্যাকগ্রাউন্ডে লোড করে রাখা [cite: 2026-02-18]
+    };
+
+    // ২. সেকশন টগল করার ফাংশন [cite: 2026-02-18]
+    function showRequests() {
+        document.getElementById('requestsSection').style.display = 'block';
+        document.getElementById('profileSection').style.display = 'none';
+        document.getElementById('navRequests').classList.add('active', 'bg-success');
+        document.getElementById('navProfile').classList.remove('active', 'bg-success');
+        loadGuideBookings();
+    }
+
+    function showProfile() {
+        document.getElementById('requestsSection').style.display = 'none';
+        document.getElementById('profileSection').style.display = 'block';
+        document.getElementById('navProfile').classList.add('active', 'bg-success');
+        document.getElementById('navRequests').classList.remove('active', 'bg-success');
+        loadGuideProfile(); // প্রোফাইল সেকশনে গেলে ফ্রেশ ডাটা আনা [cite: 2026-02-18]
+    }
+
+    // ৩. বুকিং লোড করার ফাংশন [cite: 2026-02-18]
+    async function loadGuideBookings() {
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/bookings/guide-bookings', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const bookings = await res.json();
+            displayBookings(bookings);
+        } catch (err) {
+            console.error("Error loading bookings:", err);
+        }
+    }
+
+    function displayBookings(bookings) {
+        const container = document.getElementById('bookingList');
+        if (bookings.length === 0) {
+            container.innerHTML = `<div class="col-12 text-center mt-5"><h4>No booking requests yet!</h4></div>`;
+            return;
+        }
+
+        container.innerHTML = bookings.map(b => `
+            <div class="col-md-6">
+                <div class="card booking-card p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="fw-bold text-success mb-1">${b.place_name}</h5>
+                            <span class="text-muted small">ID: #BK-${b.id}</span>
+                        </div>
+                        <span class="status-badge px-3 py-2 bg-${b.status === 'pending' ? 'warning' : (b.status === 'accepted' ? 'success' : 'danger')}">
+                            ${b.status.toUpperCase()}
+                        </span>
+                    </div>
+                    <div class="mb-3">
+                        <p class="mb-1 text-secondary"><i class="fas fa-user me-2"></i>${b.traveler_name}</p>
+                        <p class="mb-1 text-secondary"><i class="fas fa-calendar-day me-2"></i>${b.booking_date}</p>
+                        <p class="mb-1 text-secondary"><i class="fas fa-clock me-2"></i>${b.total_days} Days</p>
+                    </div>
+                    <h5 class="text-success fw-bold mb-3">Earnings: ৳ ${b.total_price}</h5>
+                    <hr>
+                    ${b.status === 'pending' ? `
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-action flex-grow-1" onclick="updateStatus(${b.id}, 'accepted')">Accept</button>
+                            <button class="btn btn-outline-danger btn-action flex-grow-1" onclick="updateStatus(${b.id}, 'rejected')">Reject</button>
+                        </div>
+                    ` : `<p class="text-center text-muted mb-0 fw-bold">Booking Already ${b.status.toUpperCase()}</p>`}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ৪. গাইড প্রোফাইল ডাটা লোড করার ফাংশন [cite: 2026-02-18]
+    async function loadGuideProfile() {
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/guide/profile', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+
+            // ফর্ম ফিল্ডে ডাটা বসানো [cite: 2026-02-18]
+            if (document.getElementById('editName')) document.getElementById('editName').value = data.name || "";
+            if (document.getElementById('editEmail')) document.getElementById('editEmail').value = data.email || "";
+            if (document.getElementById('editPhone')) document.getElementById('editPhone').value = data.phone || "";
+            if (document.getElementById('editLocation')) document.getElementById('editLocation').value = data.location || "";
+            if (document.getElementById('editBio')) document.getElementById('editBio').value = data.bio || "";
+            if (document.getElementById('editPrice')) document.getElementById('editPrice').value = data.price_per_day || "";
+            if (document.getElementById('editLanguages')) document.getElementById('editLanguages').value = data.languages || "";
+
+            // ভেরিফিকেশন ব্যাজ আপডেট [cite: 2026-02-18]
+            const badge = document.getElementById('verifyBadge');
+            if (badge) {
+                if (data.is_verified === 1) {
+                    badge.innerText = "Verified Guide";
+                    badge.className = "status-badge px-4 py-2 bg-success text-white";
+                } else {
+                    badge.innerText = "Verification Pending";
+                    badge.className = "status-badge px-4 py-2 bg-warning text-dark";
+                }
+            }
+        } catch (err) { console.error("Profile load failed:", err); }
+    }
+
+    // ৫. স্ট্যাটাস আপডেট লজিক [cite: 2026-02-18]
+    async function updateStatus(bookingId, newStatus) {
+        if (!confirm(`Are you sure you want to ${newStatus} this booking?`)) return;
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/bookings/update-status', {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({ bookingId, status: newStatus })
+            });
+            if (res.ok) {
+                alert(`Booking ${newStatus} successfully!`);
+                loadGuideBookings();
+            }
+        } catch (err) { alert("Failed to update status."); }
+    }
+
+    // ৬. প্রোফাইল আপডেট লজিক [cite: 2026-02-18]
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                phone: document.getElementById('editPhone').value,
+                location: document.getElementById('editLocation').value,
+                bio: document.getElementById('editBio').value,
+                price_per_day: document.getElementById('editPrice').value,
+                languages: document.getElementById('editLanguages').value
+            };
+
+            try {
+                const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/guide/update-profile', {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify(data)
+                });
+                if(res.ok) {
+                    alert("Profile Updated Successfully!");
+                    loadGuideProfile();
+                }
+            } catch (err) { console.error("Update failed:", err); }
+        };
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "../index.html";
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traveler Dashboard | Tourist Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #212529; }
+        body.dark-mode { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0; }
+        body { background-color: var(--bg-color); color: var(--text-color); transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        .dashboard-card { border: none; border-radius: 15px; background-color: var(--card-bg); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .navbar { background-color: #198754 !important; } /* গ্রিন থিম [cite: 2026-02-17] */
+        .status-badge { font-weight: 600; letter-spacing: 0.5px; }
+        .booking-item-card { transition: 0.3s; }
+        .booking-item-card:hover { transform: scale(1.01); }
+    </style>
+</head>
+<body>
+    <!-- <nav class="navbar navbar-dark p-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="../index.html"><i class="fas fa-plane-departure text-warning me-2"></i>Traveler Panel</a>
+            <button class="btn btn-outline-light btn-sm rounded-pill px-4" onclick="logoutUser()">Logout</button>
+        </div>
+    </nav> -->
+
+
+    <nav class="navbar navbar-dark p-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="../index.html"><i class="fas fa-plane-departure text-warning me-2"></i>Traveler Panel</a>
+            <div class="d-flex align-items-center">
+                <a href="traveler-profile.html" class="btn btn-info btn-sm rounded-pill px-4 me-2 text-white">
+                    <i class="fas fa-user-circle me-1"></i>My Profile
+                </a>
+                <button class="btn btn-outline-light btn-sm rounded-pill px-4" onclick="logoutUser()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="container mt-5">
+       
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h3 class="fw-bold">Welcome, <span id="travelerName" class="text-success">Traveler</span>!</h3>
+                        <p class="text-muted">Manage your bookings and track your trip status</p>
+                    </div>
+                    <a href="traveler-profile.html" class="btn btn-outline-success btn-sm rounded-pill px-4 shadow-sm">
+                        <i class="fas fa-user-edit me-1"></i>Manage Account
+                    </a>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card dashboard-card p-4 text-center">
+                    <h1 class="text-success fw-bold" id="totalBookings">0</h1>
+                    <p class="mb-0 text-muted">Total Trips Booked</p>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <h5 class="fw-bold mb-4 mt-2"><i class="fas fa-history me-2"></i>My Booking Journey</h5>
+                <div id="travelerBookings">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="mt-2">Loading your adventures...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const userName = localStorage.getItem('userName');
+
+        // ১. বুকিং ডাটা ফেচ করা [cite: 2026-02-16]
+        async function fetchMyBookings() {
+            try {
+                const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/bookings/my-bookings', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const bookings = await res.json();
+                
+                document.getElementById('totalBookings').innerText = bookings.length;
+                displayBookings(bookings);
+            } catch (err) {
+                console.error("Load failed", err);
+                document.getElementById('travelerBookings').innerHTML = `<p class="text-danger text-center">Failed to load bookings. Check server connection.</p>`;
+            }
+        }
+
+        // ২. কার্ড ডিজাইনে বুকিং প্রদর্শন করা [cite: 2026-02-17]
+        function displayBookings(bookings) {
+            const container = document.getElementById('travelerBookings');
+            
+            if (bookings.length === 0) {
+                container.innerHTML = `<div class="text-center p-5 dashboard-card"><p class="text-muted">No bookings found yet. Start your journey today!</p></div>`;
+                return;
+            }
+
+            container.innerHTML = bookings.map(b => `
+                <div class="card mb-3 shadow-sm border-0 rounded-4 overflow-hidden booking-item-card dashboard-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-2">${b.place_name}</h5>
+                                <div class="d-flex flex-column gap-1">
+                                    <span class="text-muted small"><i class="fas fa-user-tie me-2 text-success"></i>Guide: ${b.guide_name || 'Assigned Soon'}</span>
+                                    <span class="text-muted small"><i class="fas fa-calendar-alt me-2 text-success"></i>Date: ${new Date(b.booking_date).toLocaleDateString()}</span>
+                                    <span class="text-muted small"><i class="fas fa-clock me-2 text-success"></i>Duration: ${b.total_days} Days</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge rounded-pill mb-2 px-3 py-2 shadow-sm status-badge 
+                                    ${b.status === 'pending' ? 'bg-warning text-dark' : 
+                                      b.status === 'accepted' ? 'bg-success' : 'bg-danger'}">
+                                    <i class="fas ${b.status === 'pending' ? 'fa-hourglass-half' : (b.status === 'accepted' ? 'fa-check-circle' : 'fa-times-circle')} me-1"></i>
+                                    ${b.status.toUpperCase()}
+                                </span>
+                                <h5 class="fw-bold text-success mt-2 mb-0">৳ ${b.total_price || b.total_payment}</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function logoutUser() {
+            localStorage.clear();
+            window.location.href = '../index.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+            
+            // ৩. অথেনটিকেশন চেক [cite: 2026-02-16]
+            if (!token || localStorage.getItem('role') !== 'traveler') {
+                alert("Please login as a traveler to access this panel.");
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            if (userName) document.getElementById('travelerName').innerText = userName;
+            fetchMyBookings(); 
+        });
+    </script>
+</body>
+</html>

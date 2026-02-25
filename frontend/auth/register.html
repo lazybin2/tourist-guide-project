@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Tourist Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --bg-color: #f4f7f6; --text-color: #212529; --card-bg: #ffffff; --input-bg: #ffffff; --input-text: #212529; }
+        body.dark-mode { --bg-color: #121212; --text-color: #e0e0e0; --card-bg: #1e1e1e; --input-bg: #2d2d2d; --input-text: #ffffff; }
+
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; align-items: center; transition: 0.3s; }
+        .register-card { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background-color: var(--card-bg); }
+        .form-control, .form-select { background-color: var(--input-bg); color: var(--input-text); border: 1px solid #ddd; }
+        .form-control:focus, .form-select:focus { background-color: var(--input-bg); color: var(--input-text); box-shadow: none; border-color: #ffc107; }
+        .tourist-brand { font-weight: 700; font-size: 1.8rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-5">
+                <div class="card register-card">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h3 class="tourist-brand text-primary">
+                                <i class="fas fa-map-marked-alt"></i> <span style="color: #ffc107;">TOURIST</span> <span id="guideText">GUIDE</span>
+                            </h3>
+                            <p class="text-muted small">Create an account to start your journey</p>
+                        </div>
+                        
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Full Name</label>
+                                <input type="text" id="fullName" class="form-control rounded-pill px-3" placeholder="Mia Fahad" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Email Address</label>
+                                <input type="email" id="email" class="form-control rounded-pill px-3" placeholder="fahad@example.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Join As</label>
+                                <select id="role" class="form-select rounded-pill px-3">
+                                    <option value="traveler">Traveler</option>
+                                    <option value="guide">Guide</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Password</label>
+                                <input type="password" id="password" class="form-control rounded-pill px-3" placeholder="********" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">Confirm Password</label>
+                                <input type="password" id="confirmPassword" class="form-control rounded-pill px-3" placeholder="********" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm">Register Now</button>
+                        </form>
+                        
+                        <div class="mt-4 text-center text-muted small">
+                            <p>Already have an account? <a href="login.html" class="text-decoration-none fw-bold">Login here</a></p>
+                            <a href="../index.html" class="text-decoration-none small"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+
+        window.onload = () => {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('guideText').style.color = "#ffffff";
+            } else {
+                document.getElementById('guideText').style.color = "#212529";
+            }
+        };
+    </script>
+</body>
+</html>

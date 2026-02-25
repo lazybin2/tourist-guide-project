@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Trip | TravelBD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Poppins', sans-serif; }
+        .booking-container { max-width: 600px; margin: 50px auto; }
+        .booking-card { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .header-bg { background: linear-gradient(135deg, #198754, #146c43); color: white; border-radius: 20px 20px 0 0; padding: 30px; }
+        .price-badge { background: rgba(255, 255, 255, 0.2); padding: 5px 15px; border-radius: 50px; font-size: 0.9rem; }
+        .summary-box { background: #e9ecef; border-radius: 15px; padding: 20px; margin-top: 20px; }
+        .form-control { border-radius: 10px; padding: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container booking-container">
+    <div class="card booking-card">
+        <div class="header-bg text-center">
+            <i class="fas fa-suitcase-rolling fa-3x mb-3"></i>
+            <h2 class="fw-bold">Confirm Your Trip</h2>
+            <p class="mb-0 opacity-75">Fill in the details to secure your journey</p>
+        </div>
+
+        <div class="card-body p-4">
+            <div id="placeDetails" class="mb-4">
+                <h4 id="displayPlaceName" class="fw-bold text-success mb-1">Loading Spot...</h4>
+                <p class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> <span id="displayLocation">...</span></p>
+                <div class="d-inline-block price-badge text-dark fw-bold bg-warning">
+                    Base Price: <span id="displayPrice">0</span> BDT/Day
+                </div>
+            </div>
+
+            <hr>
+
+            <form id="bookingForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Check-in Date</label>
+                        <input type="date" id="startDate" class="form-control" required onchange="updateSummary()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Check-out Date</label>
+                        <input type="date" id="endDate" class="form-control" required onchange="updateSummary()">
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Stay:</span>
+                        <span class="fw-bold" id="totalDays">0 Days</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2">
+                        <span class="fs-5 fw-bold">Total Payment:</span>
+                        <span class="fs-5 fw-bold text-success">৳ <span id="totalAmount">0</span></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 btn-lg rounded-pill mt-4 fw-bold shadow">
+                    Confirm & Book Now
+                </button>
+                <a href="../index.html" class="btn btn-link w-100 text-muted mt-2 text-decoration-none">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pricePerDay = 0;
+    let currentGuideId = null; 
+    const token = localStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const placeId = parseInt(urlParams.get('placeId')); 
+
+    // ১. পেজ লোড হওয়ার সময় লগইন চেক এবং ডাটা ফেচিং [cite: 2026-02-17]
+    window.onload = async () => {
+        if (!token) {
+            alert("Please login first to book a trip!");
+            window.location.href = "../auth/login.html";
+            return;
+        }
+
+        // আজকের তারিখের আগে যেন ডেট সিলেক্ট করা না যায়
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').setAttribute('min', today);
+        document.getElementById('endDate').setAttribute('min', today);
+
+        try {
+            const res = await fetch(`https://tourist-guide-backend-zl1u.onrender.com/api/places/all`);
+            const places = await res.json();
+            const place = places.find(p => p.id == placeId);
+            
+            if (place) {
+                document.getElementById('displayPlaceName').innerText = place.name;
+                document.getElementById('displayLocation').innerText = place.location;
+                document.getElementById('displayPrice').innerText = place.price_per_day;
+                pricePerDay = place.price_per_day;
+                
+                // গাইড আইডি সঠিকভাবে সেট করা হচ্ছে 
+                currentGuideId = place.guide_id; 
+                console.log("Loaded Place Data:", place);
+            } else {
+                alert("Place not found!");
+                window.location.href = "../index.html";
+            }
+        } catch (err) { console.error("Error loading data:", err); }
+    };
+
+    // ২. বুকিং সামারি আপডেট করা
+    function updateSummary() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+
+        if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+
+            if (endDate > startDate) {
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                document.getElementById('totalDays').innerText = diffDays + " Days";
+                document.getElementById('totalAmount').innerText = (diffDays * pricePerDay);
+            } else {
+                document.getElementById('totalDays').innerText = "0 Days";
+                document.getElementById('totalAmount').innerText = "0";
+            }
+        }
+    }
+
+    // ৩. বুকিং সাবমিট করা [cite: 2026-02-17, 2026-02-18]
+    document.getElementById('bookingForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const daysText = document.getElementById('totalDays').innerText;
+        const days = parseInt(daysText.split(' ')[0]);
+        const payment = parseFloat(document.getElementById('totalAmount').innerText);
+
+        if (days <= 0) {
+            alert("Check-out date must be after Check-in date!");
+            return;
+        }
+
+        // গাইড আইডি চেক করা
+        if (!currentGuideId) {
+            alert("Error: This place has no assigned guide. Admin must assign a guide first.");
+            return;
+        }
+
+        console.log("Sending Data:", {
+            guide_id: currentGuideId,
+            place_id: placeId,
+            booking_date: document.getElementById('startDate').value,
+            total_days: days,
+            total_price: payment
+        });
+
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/bookings/create', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({
+                    guide_id: parseInt(currentGuideId),
+                    place_id: parseInt(placeId),
+                    booking_date: document.getElementById('startDate').value,
+                    total_days: days,
+                    total_price: payment
+                })
+            });
+
+            const data = await res.json();
+            if(res.ok) {
+                alert("Success! Booking confirmed and email sent to the guide.");
+                window.location.href = "traveler.html"; 
+            } else {
+                alert("Booking Failed: " + data.message);
+            }
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            alert("Server connection error!");
+        }
+    };
+</script>
+
+</body>
+</html>

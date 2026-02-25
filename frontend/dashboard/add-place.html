@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Tourist Place</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+
+<div class="container bg-white shadow p-4 rounded" style="max-width: 600px;">
+    <h3 class="mb-4 text-success">Add New Tourist Spot</h3>
+    
+    <form id="placeForm">
+        <div class="mb-3">
+            <label class="form-label">Place Name</label>
+            <input type="text" id="name" class="form-control" placeholder="e.g. Saint Martin" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input type="text" id="location" class="form-control" placeholder="e.g. Cox's Bazar" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Price per Day (BDT)</label>
+            <input type="number" id="price_per_day" class="form-control" placeholder="e.g. 1500" required>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold text-success">Assign a Guide</label>
+            <select id="guideSelect" class="form-select" required>
+                <option value="">-- Loading Guides... --</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Image URL</label>
+            <input type="text" id="image_url" class="form-control" placeholder="https://example.com/image.jpg">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea id="description" class="form-control" rows="3" placeholder="Write something about this place..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-success w-100 fw-bold">Publish to Platform</button>
+    </form>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+
+    window.onload = async () => {
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/guides', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const guides = await res.json();
+            
+            const guideDropdown = document.getElementById('guideSelect');
+            guideDropdown.innerHTML = '<option value="">-- Select a Guide --</option>';
+            
+            guides.forEach(guide => {
+                const option = document.createElement('option');
+                option.value = guide.id;
+                option.textContent = `${guide.name} (${guide.location})`;
+                guideDropdown.appendChild(option);
+            });
+        } catch (err) {
+            console.error("Failed to load guides:", err);
+            document.getElementById('guideSelect').innerHTML = '<option value="">Error loading guides</option>';
+        }
+    };
+
+    document.getElementById('placeForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const data = {
+            name: document.getElementById('name').value,
+            location: document.getElementById('location').value,
+            price_per_day: document.getElementById('price_per_day').value,
+            image_url: document.getElementById('image_url').value,
+            description: document.getElementById('description').value,
+            guide_id: document.getElementById('guideSelect').value 
+        };
+
+        const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/places/add', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': 'Bearer ' + token 
+            },
+            body: JSON.stringify(data)
+        });
+
+        if(res.ok) {
+            alert("Success! The place is now visible with an assigned guide.");
+            window.location.href = "admin.html";
+        } else {
+            alert("Error: Check if you are authorized or all fields are filled.");
+        }
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Management | Advanced Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Poppins', sans-serif; }
+        .nav-tabs .nav-link { border: none; color: #6c757d; font-weight: 600; padding: 15px 25px; cursor: pointer; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; background: none; }
+        .action-btn { transition: 0.3s; }
+        .action-btn:hover { transform: scale(1.05); }
+        .card-custom { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .id-text { color: #6c757d; font-family: monospace; font-weight: 600; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container bg-white card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="fw-bold"><i class="fas fa-tools text-warning me-2"></i>System Management</h2>
+        <a href="admin.html" class="btn btn-dark btn-sm rounded-pill px-4 shadow-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="managementTabs">
+        <li class="nav-item">
+            <button class="nav-link active" onclick="switchTab('guideSection', this)">
+                <i class="fas fa-user-check me-1"></i> Guide Verification
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('userSection', this)">
+                <i class="fas fa-users-cog me-1"></i> User Management
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('placeSection', this)">
+                <i class="fas fa-map-marked-alt me-1"></i> Place Management
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('bookingSection', this)">
+                <i class="fas fa-calendar-check me-1"></i> Booking Overview
+            </button>
+        </li>
+    </ul>
+
+    <div id="guideSection" class="tab-content">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="guideTable">
+                    <tr><td colspan="5" class="text-center py-4 text-muted">Fetching data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="userSection" class="tab-content" style="display: none;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>Email Address</th>
+                        <th>User Role</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="userTable">
+                    <tr><td colspan="5" class="text-center py-4 text-muted">Fetching data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="placeSection" class="tab-content" style="display: none;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Place Name</th>
+                        <th>Location</th>
+                        <th>Price/Day</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="placeTable">
+                    <tr><td colspan="5" class="text-center py-4 text-muted">Fetching places...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="bookingSection" class="tab-content" style="display: none;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>B-ID</th>
+                        <th>Traveler</th>
+                        <th>Guide</th>
+                        <th>Spot Name</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingTable">
+                    <tr><td colspan="5" class="text-center py-4">Loading bookings...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+
+    // ট্যাব সুইচ করার লজিক আপডেট করা হলো
+    function switchTab(sectionId, btn) {
+        document.querySelectorAll('.tab-content').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById(sectionId).style.display = 'block';
+        btn.classList.add('active');
+        
+        // কন্ডিশনাল লোডিং
+        if(sectionId === 'userSection') fetchAllUsers();
+        else if(sectionId === 'placeSection') fetchPlaces();
+        else if(sectionId === 'bookingSection') fetchBookings(); // নতুন কল
+        else fetchGuides();
+    }
+
+    async function handleVerification(id, currentStatus) {
+        const newStatus = 1; 
+        if (!confirm(`Are you sure you want to verify this guide?`)) return;
+
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/verify-guide', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({ guideId: id, status: newStatus })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message); 
+                fetchGuides(); 
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Server connection failed.");
+        }
+    }
+
+    async function fetchGuides() {
+        const table = document.getElementById('guideTable');
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/guides', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            const guides = await res.json();
+            
+            if (!guides || guides.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No guides found.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = guides.map(g => {
+                const isVerified = g.is_verified === 1;
+                const badgeClass = isVerified ? 'bg-success' : 'bg-warning text-dark';
+                const statusLabel = isVerified ? 'Verified' : 'Pending';
+                const actionBtn = isVerified ? 
+                    `<span class="text-muted small">Already Verified</span>` : 
+                    `<button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm action-btn" onclick="handleVerification(${g.user_id}, 1)">Verify Now</button>`;
+
+                return `
+                    <tr>
+                        <td class="id-text">#${g.user_id}</td>
+                        <td><b>${g.name}</b></td>
+                        <td>${g.email}</td>
+                        <td><span class="badge ${badgeClass} rounded-pill px-3 py-2 shadow-sm">${statusLabel}</span></td>
+                        <td class="text-center">${actionBtn}</td>
+                    </tr>`;
+            }).join('');
+        } catch (err) { 
+            table.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Server error!</td></tr>`;
+        }
+    }
+
+    async function fetchPlaces() {
+        const table = document.getElementById('placeTable');
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/places/all');
+            const places = await res.json();
+            
+            if (!places || places.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No tourist places added yet.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = places.map(p => `
+                <tr>
+                    <td class="id-text">#${p.id}</td>
+                    <td><b>${p.name}</b></td>
+                    <td>${p.location}</td>
+                    <td>${p.price_per_day || 0} BDT</td>
+                    <td class="text-center">
+                        <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm action-btn" onclick="deletePlace(${p.id})">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </button>
+                    </td>
+                </tr>`).join('');
+        } catch (err) { 
+            table.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Failed to load places.</td></tr>`;
+        }
+    }
+
+    async function deletePlace(id) {
+        if(!confirm("Are you sure you want to permanently remove this tourist spot?")) return;
+        try {
+            const res = await fetch(`https://tourist-guide-backend-zl1u.onrender.com/api/places/delete/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if(res.ok) {
+                alert("Place deleted successfully!");
+                fetchPlaces();
+            } else {
+                alert("Authorization failed. Admins only.");
+            }
+        } catch (err) { alert("Server error during deletion."); }
+    }
+
+    // নতুন বুকিং ফেচ ফাংশন
+    async function fetchBookings() {
+        const table = document.getElementById('bookingTable');
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/all-bookings', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            const bookings = await res.json();
+
+            if (bookings.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No bookings made yet.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = bookings.map(b => `
+                <tr>
+                    <td class="id-text">#BK-${b.id}</td>
+                    <td><b>${b.traveler_name}</b></td>
+                    <td><i class="fas fa-user-tie me-1 text-primary"></i> ${b.guide_name}</td>
+                    <td><i class="fas fa-map-marker-alt me-1 text-danger"></i> ${b.place_name}</td>
+                    <td>
+                        <span class="badge ${b.status === 'confirmed' ? 'bg-info' : 'bg-secondary'} rounded-pill px-3 py-2">
+                            ${b.status.toUpperCase()}
+                        </span>
+                    </td>
+                </tr>`).join('');
+        } catch (err) { 
+            table.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error connecting to booking service.</td></tr>`;
+        }
+    }
+
+    async function fetchAllUsers() {
+        const table = document.getElementById('userTable');
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/all-users', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            const users = await res.json();
+
+            table.innerHTML = users.map(u => {
+                let roleColor = u.role === 'admin' || u.role === 'CEO' ? "bg-danger" : (u.role === 'guide' ? "bg-primary" : "bg-success");
+                return `
+                    <tr>
+                        <td class="id-text">#${u.id}</td>
+                        <td><b>${u.name}</b></td>
+                        <td>${u.email}</td>
+                        <td><span class="badge ${roleColor} rounded-pill px-3 py-2">${u.role.toUpperCase()}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="deleteUser(${u.id})">Delete</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        } catch (err) { console.error(err); }
+    }
+
+    async function deleteUser(id) {
+        if(!confirm("Are you sure?")) return;
+        const res = await fetch(`https://tourist-guide-backend-zl1u.onrender.com/api/admin/delete-user/${id}`, {
+            method: 'DELETE',
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        if(res.ok) fetchAllUsers();
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchGuides);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

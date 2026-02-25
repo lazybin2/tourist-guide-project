@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Tourist Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .dashboard-header { background: #212529; color: white; padding: 40px 0; border-radius: 0 0 30px 30px; margin-bottom: 40px; }
+        .menu-card { 
+            border: none; 
+            border-radius: 20px; 
+            transition: all 0.3s ease; 
+            cursor: pointer; 
+            overflow: hidden; 
+            height: 100%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .menu-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .icon-box { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 2rem; }
+        .bg-profile { background-color: #e3f2fd; color: #0d6efd; }
+        .bg-system { background-color: #fff3cd; color: #856404; }
+        .bg-places { background-color: #d1e7dd; color: #0f5132; }
+        .btn-logout { border-radius: 50px; }
+        /* কার্ড স্টাইল */
+        .stat-card { border: 0; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-header shadow">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fw-bold mb-1">Control Center</h1>
+            <p class="mb-0 opacity-75">Welcome back, <span id="adminName" class="text-info">Admin</span></p>
+        </div>
+        <a href="../index.html" class="btn btn-outline-light btn-logout px-4">Exit to Home</a>
+    </div>
+</div>
+
+<div class="container mb-4">
+    <div class="row g-3">
+        <div class="col-md-3 col-6">
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small mb-0">Total Users</h6>
+                        <h4 class="fw-bold mb-0" id="statUsers">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small mb-0">Verified Guides</h6>
+                        <h4 class="fw-bold mb-0" id="statGuides">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small mb-0">Total Places</h6>
+                        <h4 class="fw-bold mb-0" id="statPlaces">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small mb-0">Total Bookings</h6>
+                        <h4 class="fw-bold mb-0" id="statBookings">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="card p-4 shadow-sm border-0" style="border-radius: 15px; background: #fff;">
+        <h5 class="fw-bold mb-3"><i class="fas fa-bullhorn me-2 text-warning"></i>Push Public Notice</h5>
+        <p class="text-muted small">This notice will be visible to all visitors on the Home Page. [cite: 2026-02-18]</p>
+        <div class="input-group">
+            <input type="text" id="noticeInput" class="form-control border-end-0" style="border-radius: 10px 0 0 10px;" placeholder="Write a notice for everyone...">
+            <button class="btn btn-warning fw-bold px-4" style="border-radius: 0 10px 10px 0;" onclick="pushNotice()">Send Now</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+            <div class="card menu-card p-4 text-center shadow-sm" onclick="location.href='admin-profile.html'">
+                <div class="icon-box bg-profile mx-auto">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h4 class="fw-bold">Admin Profile</h4>
+                <p class="text-muted small">Manage your personal information and security credentials.</p>
+                <div class="text-primary fw-bold mt-2">Manage Profile <i class="fas fa-arrow-right ms-1"></i></div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card menu-card p-4 text-center shadow-sm" onclick="location.href='system_management.html'">
+                <div class="icon-box bg-system mx-auto">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h4 class="fw-bold">System Management</h4>
+                <p class="text-muted small">Verify guides, monitor users, and control platform settings.</p>
+                <div class="text-warning fw-bold mt-2">Open Tools <i class="fas fa-arrow-right ms-1"></i></div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card menu-card p-4 text-center shadow-sm" onclick="location.href='add-place.html'">
+                <div class="icon-box bg-places mx-auto">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h4 class="fw-bold">Manage Places</h4>
+                <p class="text-muted small">Create and manage tourist destinations for travelers.</p>
+                <div class="text-success fw-bold mt-2">Add New Spot <i class="fas fa-plus-circle ms-1"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+
+    // ডাটাবেস থেকে লাইভ স্ট্যাটস ফেচ করা
+    async function fetchStats() {
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/stats', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const stats = await res.json();
+            
+            document.getElementById('statUsers').innerText = stats.totalUsers || 0;
+            document.getElementById('statGuides').innerText = stats.verifiedGuides || 0;
+            document.getElementById('statPlaces').innerText = stats.totalPlaces || 0;
+            document.getElementById('statBookings').innerText = stats.totalBookings || 0;
+        } catch (err) {
+            console.error("Stats load failed:", err);
+        }
+    }
+
+    // নতুন যোগ করা নোটিশ পাঠানোর ফাংশন [cite: 2026-02-18]
+    async function pushNotice() {
+        const messageInput = document.getElementById('noticeInput');
+        const message = messageInput.value;
+
+        if (!message) {
+            alert("Please write a notice before sending!");
+            return;
+        }
+
+        try {
+            const res = await fetch('https://tourist-guide-backend-zl1u.onrender.com/api/admin/send-notice', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({ message })
+            });
+
+            if(res.ok) {
+                alert("Notice published successfully to the Home Page!");
+                messageInput.value = ''; // বক্স খালি করা
+            } else {
+                alert("Failed to publish notice. Check backend connection.");
+            }
+        } catch (err) {
+            console.error("Notice push error:", err);
+            alert("Error connecting to server!");
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // লগইন এবং রোল ভেরিফিকেশন [cite: 2026-02-16]
+        const role = localStorage.getItem('role');
+        const adminName = localStorage.getItem('userName'); 
+
+        if (!token || (role !== 'admin' && role !== 'CEO' && role !== 'Manager')) {
+            alert("Access Denied! Administrators only.");
+            window.location.href = "../index.html";
+            return;
+        }
+
+        if (adminName) {
+            document.getElementById('adminName').innerText = adminName;
+        }
+
+        // স্ট্যাটস লোড করা
+        fetchStats();
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
