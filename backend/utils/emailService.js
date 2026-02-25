@@ -1,15 +1,18 @@
 const nodemailer = require("nodemailer");
 
-//create transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false 
+  }
 });
 
-//send email
 const sendEmail = async (to, subject, text, html = null) => {
   try {
     const mailOptions = {
@@ -32,7 +35,6 @@ const sendEmail = async (to, subject, text, html = null) => {
   }
 };
 
-//send email for guide verification status update
 const sendGuideVerificationEmail = async (email, name, isVerified) => {
     const statusText = isVerified ? "Approved" : "Rejected/Pending";
     const message = isVerified 
@@ -54,7 +56,6 @@ const sendGuideVerificationEmail = async (email, name, isVerified) => {
     return sendEmail(email, `Account Verification Status: ${statusText}`, message, htmlContent);
 };
 
-//all functions are exported
 module.exports = {
     sendEmail,
     sendGuideVerificationEmail
