@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail', 
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -9,26 +9,51 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendEmail = async (to, subject, text, html = null) => {
-  try {
-    const mailOptions = {
-      from: `"Tourist Guide BD" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text, 
-    };
+  const mailOptions = {
+    from: `"Tourist Guide BD" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html
+  };
 
-    if (html) {
-      mailOptions.html = html;
-    }
+  // এখানে await সরিয়ে দিচ্ছি যেন ইমেইলের ভুলের জন্য বুকিং এর রেসপন্স আটকে না যায়
+  transporter.sendMail(mailOptions)
+    .then(info => console.log("✅ Email sent successfully"))
+    .catch(err => console.error("❌ Email failed:", err.message));
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully: " + info.response);
-    return true;
-  } catch (error) {
-    console.error("❌ Nodemailer Error:", error.message);
-    return false;
-  }
+  return true; // এটি সবসময় true পাঠাবে যেন ফ্রন্টএন্ড সাকসেস এলার্ট পায়
 };
+
+// const transporter = nodemailer.createTransport({
+//   service: 'gmail', 
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
+
+// const sendEmail = async (to, subject, text, html = null) => {
+//   try {
+//     const mailOptions = {
+//       from: `"Tourist Guide BD" <${process.env.EMAIL_USER}>`,
+//       to,
+//       subject,
+//       text, 
+//     };
+
+//     if (html) {
+//       mailOptions.html = html;
+//     }
+
+//     const info = await transporter.sendMail(mailOptions);
+//     console.log("✅ Email sent successfully: " + info.response);
+//     return true;
+//   } catch (error) {
+//     console.error("❌ Nodemailer Error:", error.message);
+//     return false;
+//   }
+// };
 
 const sendGuideVerificationEmail = async (email, name, isVerified) => {
     const statusText = isVerified ? "Approved" : "Rejected/Pending";
@@ -55,4 +80,5 @@ module.exports = {
     sendEmail,
     sendGuideVerificationEmail
 };
+
 
