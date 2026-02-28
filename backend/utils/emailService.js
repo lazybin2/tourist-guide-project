@@ -1,12 +1,29 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    // এটি রেন্ডারের নেটওয়ার্ক ব্লকিং এড়াতে সাহায্য করতে পারে
+    rejectUnauthorized: false,
+    minVersion: "TLSv1.2"
+  },
+  pool: true, // কানেকশন ধরে রাখার জন্য
 });
+
+
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
 
 const sendEmail = async (to, subject, text, html = null) => {
   const mailOptions = {
@@ -17,43 +34,12 @@ const sendEmail = async (to, subject, text, html = null) => {
     html
   };
 
-  // এখানে await সরিয়ে দিচ্ছি যেন ইমেইলের ভুলের জন্য বুকিং এর রেসপন্স আটকে না যায়
   transporter.sendMail(mailOptions)
     .then(info => console.log("✅ Email sent successfully"))
     .catch(err => console.error("❌ Email failed:", err.message));
 
-  return true; // এটি সবসময় true পাঠাবে যেন ফ্রন্টএন্ড সাকসেস এলার্ট পায়
+  return true; 
 };
-
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail', 
-//   auth: {
-//     user: process.env.EMAIL_USER,
-//     pass: process.env.EMAIL_PASS,
-//   },
-// });
-
-// const sendEmail = async (to, subject, text, html = null) => {
-//   try {
-//     const mailOptions = {
-//       from: `"Tourist Guide BD" <${process.env.EMAIL_USER}>`,
-//       to,
-//       subject,
-//       text, 
-//     };
-
-//     if (html) {
-//       mailOptions.html = html;
-//     }
-
-//     const info = await transporter.sendMail(mailOptions);
-//     console.log("✅ Email sent successfully: " + info.response);
-//     return true;
-//   } catch (error) {
-//     console.error("❌ Nodemailer Error:", error.message);
-//     return false;
-//   }
-// };
 
 const sendGuideVerificationEmail = async (email, name, isVerified) => {
     const statusText = isVerified ? "Approved" : "Rejected/Pending";
@@ -80,5 +66,6 @@ module.exports = {
     sendEmail,
     sendGuideVerificationEmail
 };
+
 
 
